@@ -5,12 +5,12 @@
 class Threadcache
 {
 public:
-	//ÉêÇëÄÚ´æºÍÊÍ·ÅÄÚ´æ
+	//ç”³è¯·å†…å­˜å’Œé‡Šæ”¾å†…å­˜
 	void* Allocate(size_t size);
 	void Deallocate(void* ptr, size_t size);
-	//´ÓÖĞĞÄcacheÈ¡ÄÚ´æ
+	//ä»ä¸­å¿ƒcacheå–å†…å­˜
 	void* FetchFromCentralCache(size_t index);
-	//Èç¹û×ÔÓÉÁ´±íÖĞ¶ÔÏó³¬¹ıÒ»¶¨³¤¶È
+	//å¦‚æœè‡ªç”±é“¾è¡¨ä¸­å¯¹è±¡è¶…è¿‡ä¸€å®šé•¿åº¦
 	void ListLong(FreeList& freelist, size_t num, size_t size);
 private:
 	FreeList _freeLists[NFRER_LIST];
