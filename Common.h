@@ -11,33 +11,33 @@ using std::cout;
 using std::endl;
 
 
-const size_t MAX_SIZE = 64 * 1024;//ÓÃÃ¶¾ÙÌæ´úºê£¬±ãÓÚÒÔºóµ÷ÊÔ
+const size_t MAX_SIZE = 64 * 1024;//ç”¨æšä¸¾æ›¿ä»£å®ï¼Œä¾¿äºä»¥åè°ƒè¯•
 const size_t NFRER_LIST = MAX_SIZE / 8;
 const size_t MAX_PAGES = 129;
 const size_t PAGE_SHIFT = 12;//4k
 
 
-inline void*& NextObj(void* obj)//´Ëº¯ÊıÒòÎªÆµ·±µÄµ÷ÓÃ£¬ËùÒÔÊ¹ÓÃÄÚÁªº¯Êı
+inline void*& NextObj(void* obj)//æ­¤å‡½æ•°å› ä¸ºé¢‘ç¹çš„è°ƒç”¨ï¼Œæ‰€ä»¥ä½¿ç”¨å†…è”å‡½æ•°
 {
-	//ÒòÎª*(int*)pÔÚ32Î»ÏÂÊÇ4×Ö½Ú£¬ÔÚ64Î»ÏÂÊÇ8×Ö½Ú
-	//ËùÒÔ×ª»»Îª*(void**)½âÒıÓÃÖ®ºó¾ÍÊÇvoid*£¬¶øÖ¸ÕëµÄ´óĞ¡»áËæ×ÅÏµÍ³Îª¸Ä±ä¶ø¸Ä±ä
+	//å› ä¸º*(int*)påœ¨32ä½ä¸‹æ˜¯4å­—èŠ‚ï¼Œåœ¨64ä½ä¸‹æ˜¯8å­—èŠ‚
+	//æ‰€ä»¥è½¬æ¢ä¸º*(void**)è§£å¼•ç”¨ä¹‹åå°±æ˜¯void*ï¼Œè€ŒæŒ‡é’ˆçš„å¤§å°ä¼šéšç€ç³»ç»Ÿä¸ºæ”¹å˜è€Œæ”¹å˜
 	return *((void**)obj);
 }
 
 class FreeList
 {
 public:
-	void push(void* obj)//»¹ÄÚ´æ
+	void push(void* obj)//è¿˜å†…å­˜
 	{
-		//Í·²å
-		NextObj(obj) = _freelist;//½«objÖ¸ÏòÁ´±íµÄÍ·
-		_freelist = obj;//½«Í·¸³ÖµÎªobj
-		++_num;//Í³¼ÆÊıÁ¿
+		//å¤´æ’
+		NextObj(obj) = _freelist;//å°†objæŒ‡å‘é“¾è¡¨çš„å¤´
+		_freelist = obj;//å°†å¤´èµ‹å€¼ä¸ºobj
+		++_num;//ç»Ÿè®¡æ•°é‡
 	}
 
-	void* Pop()//È¡ÄÚ´æ
+	void* Pop()//å–å†…å­˜
 	{
-		//Í·É¾
+		//å¤´åˆ 
 		void* obj = _freelist;
 		_freelist = NextObj(obj);
 		--_num;
@@ -88,15 +88,15 @@ public:
 		_num = 0;
 	}
 private:
-	void* _freelist = nullptr;//Ä¬ÈÏ¹¹Ôìº¯Êı³õÊ¼»¯
+	void* _freelist = nullptr;//é»˜è®¤æ„é€ å‡½æ•°åˆå§‹åŒ–
 	size_t _num = 0;
 };
 
 
-class SizeClass //¼ÆËã´óĞ¡µÄÀà
+class SizeClass //è®¡ç®—å¤§å°çš„ç±»
 {
 public:
-	static size_t _ListIndex(size_t size, size_t alignment_shift) //Á´±íÏÂ±ê
+	static size_t _ListIndex(size_t size, size_t alignment_shift) //é“¾è¡¨ä¸‹æ ‡
 	{
 		return ((size + (1 << alignment_shift) - 1) >> alignment_shift) - 1;		/*if (size % 8 == 0)
 		{
@@ -109,10 +109,10 @@ public:
 	static inline size_t Index(size_t size)
 	{
 		assert(size <= MAX_SIZE);
-		// Ã¿¸öÇø¼äÓĞ¶àÉÙ¸öÁ´
+		// æ¯ä¸ªåŒºé—´æœ‰å¤šå°‘ä¸ªé“¾
 		static int group_array[4] = { 16, 56, 56, 56 };
 		if (size <= 128){
-			return _ListIndex(size, 3);//ÒÔ8×Ö½Ú¶ÔÆëËã³öÁ´±íÏÂ±í
+			return _ListIndex(size, 3);//ä»¥8å­—èŠ‚å¯¹é½ç®—å‡ºé“¾è¡¨ä¸‹è¡¨
 		}
 		else if (size <= 1024){
 			return _ListIndex(size - 128, 4) + group_array[0];
@@ -128,7 +128,7 @@ public:
 		return -1;
 	}
 
-	static inline size_t _RoundUp(size_t size, size_t alignment)//¼ÆËãËùÈ¡µÄ×Ö½ÚÊıÓ¦¸Ã²¹Æëµ½¶àÉÙ£¨9-16£©~~¼ÆËãºó¶¼ÊÇ16
+	static inline size_t _RoundUp(size_t size, size_t alignment)//è®¡ç®—æ‰€å–çš„å­—èŠ‚æ•°åº”è¯¥è¡¥é½åˆ°å¤šå°‘ï¼ˆ9-16ï¼‰~~è®¡ç®—åéƒ½æ˜¯16
 	{
 		return (size + alignment - 1)&(~(alignment - 1));
 		/*if (size % 8 != 0)
@@ -137,7 +137,7 @@ public:
 			return size;*/
 	}
 
-// ¶ÔÆë´óĞ¡¼ÆËã
+// å¯¹é½å¤§å°è®¡ç®—
 	static inline size_t RoundUp(size_t size)
 	{
 		assert(size <= MAX_SIZE);
@@ -156,7 +156,7 @@ public:
 		return -1;
 	}
 
-	//¶¯Ì¬ÊÊÓ¦¸ø³öµÄ¸öÊı£¬thread Ïò central Òª
+	//åŠ¨æ€é€‚åº”ç»™å‡ºçš„ä¸ªæ•°ï¼Œthread å‘ central è¦
 	static size_t NumMoveSize(size_t size)
 	{
 		if (size == 0)
@@ -171,7 +171,7 @@ public:
 		return num;
 	}
 
-	static size_t NumMovePage(size_t size)//Ò»´ÎÏòpagecacheÈ¡¼¸¸ö
+	static size_t NumMovePage(size_t size)//ä¸€æ¬¡å‘pagecacheå–å‡ ä¸ª
 	{
 		size_t num = NumMoveSize(size);
 		size_t npage = num*size;
@@ -193,12 +193,12 @@ typedef unsigned long long PAGE_ID;
 
 struct Span
 {
-	PAGE_ID _pagid = 0;//Ò³ºÅ
-	PAGE_ID _pagesize = 0;//Ò³µÄÊıÁ¿
-	size_t _objSize = 0;//×ÔÓÉÁ´±í¶ÔÏóµÄ´óĞ¡
-	int _usecount = 0;//ÄÚ´æ¿é¶ÔÏóÊ¹ÓÃ¼ÆÊı
+	PAGE_ID _pagid = 0;//é¡µå·
+	PAGE_ID _pagesize = 0;//é¡µçš„æ•°é‡
+	size_t _objSize = 0;//è‡ªç”±é“¾è¡¨å¯¹è±¡çš„å¤§å°
+	int _usecount = 0;//å†…å­˜å—å¯¹è±¡ä½¿ç”¨è®¡æ•°
 	FreeList _freeList;
-	//Ä¬ÈÏ¹¹Ôìº¯Êı»áÊ¹ÓÃÈ±Ê¡Öµ½øĞĞ³õÊ¼»¯
+	//é»˜è®¤æ„é€ å‡½æ•°ä¼šä½¿ç”¨ç¼ºçœå€¼è¿›è¡Œåˆå§‹åŒ–
  	//size_t objsize;
 	Span* _next = nullptr;
 	Span* _prev = nullptr;
@@ -222,10 +222,10 @@ public:
 
 	Span* End()
 	{
-		return _head;//×ó±ÕÓÒ¿ª£¬ËùÒÔ·µ»ØÍ·
+		return _head;//å·¦é—­å³å¼€ï¼Œæ‰€ä»¥è¿”å›å¤´
 	}
 
-	void Insert(Span* pos, Span* newspan)//Ëæ»úÎ»ÖÃ²åÈë
+	void Insert(Span* pos, Span* newspan)//éšæœºä½ç½®æ’å…¥
 	{
 		Span* prev = pos->_prev;
 
@@ -247,7 +247,7 @@ public:
 		next->_prev = prev;
 	}
 
-	void PushFront(Span* newspan)//Í·²å
+	void PushFront(Span* newspan)//å¤´æ’
 	{
 		Insert(_head->_next,newspan);
 	}
@@ -283,7 +283,7 @@ public:
 	}
 
 private:
-	Span* _head;//´øÍ·Ë«ÏòÁ´±í
+	Span* _head;//å¸¦å¤´åŒå‘é“¾è¡¨
 	std::mutex _mut;
 };
 
