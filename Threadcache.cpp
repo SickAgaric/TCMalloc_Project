@@ -1,8 +1,8 @@
 #include"threadcache.h"
 #include"centrlcache.h"
 
-//Èç¹û²»¼ÓThreadcache£¬¾Í»áµ¼ÖÂÁ´½Ó²»ÉÏ£¬ÒòÎªÃ»ÓĞÖ¸Ã÷Õâ¸öº¯ÊıÔÚÄÇ¸öÀàÀïÃæ
-void* Threadcache::Allocate(size_t size)//ÓÉ´Ë´¦µÄsize%8¿ÉÒÔ¼ÆËã³ö×ÔÓÉÁ´±íµÄÏÂ±ê
+//å¦‚æœä¸åŠ Threadcacheï¼Œå°±ä¼šå¯¼è‡´é“¾æ¥ä¸ä¸Šï¼Œå› ä¸ºæ²¡æœ‰æŒ‡æ˜è¿™ä¸ªå‡½æ•°åœ¨é‚£ä¸ªç±»é‡Œé¢
+void* Threadcache::Allocate(size_t size)//ç”±æ­¤å¤„çš„size%8å¯ä»¥è®¡ç®—å‡ºè‡ªç”±é“¾è¡¨çš„ä¸‹æ ‡
 {
 	size_t index = SizeClass::Index(size);
 	FreeList& freeList = _freeLists[index];
@@ -13,11 +13,11 @@ void* Threadcache::Allocate(size_t size)//ÓÉ´Ë´¦µÄsize%8¿ÉÒÔ¼ÆËã³ö×ÔÓÉÁ´±íµÄÏÂ±ê
 	}
 	else
 	{
-		//Ã»ÓĞÏñÖĞĞÄ»º´æÈ¡
+		//æ²¡æœ‰åƒä¸­å¿ƒç¼“å­˜å–
 		return FetchFromCentralCache(SizeClass::RoundUp(size));
 	}
 }
-void Threadcache::Deallocate(void* ptr, size_t size)//¹é»¹ÄÚ´æ
+void Threadcache::Deallocate(void* ptr, size_t size)//å½’è¿˜å†…å­˜
 {
 	size_t index = SizeClass::Index(size);
 	FreeList& freelist = _freeLists[index];
@@ -36,7 +36,7 @@ void Threadcache::ListLong(FreeList& freelist, size_t num, size_t size)
 	void* start = nullptr, *end = nullptr;
 	freelist.PopRange(start, end, num);
 
-	NextObj(end) = nullptr;//·½Ê½ÄÚ´æÎÊÌâ
+	NextObj(end) = nullptr;//æ–¹å¼å†…å­˜é—®é¢˜
 	__centrlcache.ReleaseListToSpans(start, size);
 }
 //void* Threadcache::FetchFromCentralCache(size_t index)
@@ -49,13 +49,13 @@ void Threadcache::ListLong(FreeList& freelist, size_t num, size_t size)
 //	for (size_t i = 0; i < num-1; ++i)
 //	{
 //		char* next = cur + size;
-//		NextObj(cur) = next;//°Énext×÷ÎªÏÂÒ»¸öÖ¸ÕëµÄÖµ£¬´«¸øNextObj
+//		NextObj(cur) = next;//å§nextä½œä¸ºä¸‹ä¸€ä¸ªæŒ‡é’ˆçš„å€¼ï¼Œä¼ ç»™NextObj
 //
 //		cur = next;//
 //	}
 //	NextObj(cur) = nullptr;
 //
-//	void* head = NextObj(start); //ÒòÎª´Ë´¦Ö»È¡ÁËÒ»¸ö£¬Ò²¾ÍÊÇstart£¬ËùÒÔÍù×ÔÓÉÁ´±í¹ÒµÄÊ±ºò£¬ĞèÒªstartµÄÏÂÒ»¸ö×÷ÎªÍ·¹Ò½øÈ¥
+//	void* head = NextObj(start); //å› ä¸ºæ­¤å¤„åªå–äº†ä¸€ä¸ªï¼Œä¹Ÿå°±æ˜¯startï¼Œæ‰€ä»¥å¾€è‡ªç”±é“¾è¡¨æŒ‚çš„æ—¶å€™ï¼Œéœ€è¦startçš„ä¸‹ä¸€ä¸ªä½œä¸ºå¤´æŒ‚è¿›å»
 //	void* tail = cur;
 //	
 //	_freeLists[index].PushRange(head, tail);
@@ -65,18 +65,18 @@ void Threadcache::ListLong(FreeList& freelist, size_t num, size_t size)
 
 void* Threadcache::FetchFromCentralCache(size_t size)
 {
-	size_t num = SizeClass::NumMoveSize(size);//¼ÆËãĞèÒªµÄ¸öÊı
+	size_t num = SizeClass::NumMoveSize(size);//è®¡ç®—éœ€è¦çš„ä¸ªæ•°
 
 	void* start = nullptr, *end = nullptr;
 
-	// ´ÓÖĞĞÄ»º´æ»ñÈ¡Ò»¶¨ÊıÁ¿µÄ¶ÔÏó¸øthreadcache
+	// ä»ä¸­å¿ƒç¼“å­˜è·å–ä¸€å®šæ•°é‡çš„å¯¹è±¡ç»™threadcache
 	size_t realNum = __centrlcache.FetchRangeObj(start, end, num , size);
 
-	if (realNum == 1)//·µ»ØÒ»¸öÊ±ºòÖ±½Ó·µ»Ø
+	if (realNum == 1)//è¿”å›ä¸€ä¸ªæ—¶å€™ç›´æ¥è¿”å›
 	{
 		return start;
 	}
-	else//¶à¸öµÄÊ±ºòĞèÒª·µ»ØµÚÒ»¸ö£¬°ÑÊ£ÓàµÄ¹ÒÆğÀ´
+	else//å¤šä¸ªçš„æ—¶å€™éœ€è¦è¿”å›ç¬¬ä¸€ä¸ªï¼ŒæŠŠå‰©ä½™çš„æŒ‚èµ·æ¥
 	{
 		size_t index = SizeClass::Index(size);
 		FreeList& list = _freeLists[index];
